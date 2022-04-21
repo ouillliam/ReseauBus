@@ -4,7 +4,7 @@
 data_file_name = 'data/1_Poisy-ParcDesGlaisins.txt'
 #data_file_name = 'data/2_Piscine-Patinoire_Campus.txt'
 try:
-    with open(data_file_name, 'r') as f:
+    with open(data_file_name, 'r', encoding = "UTF-8") as f:
         content = f.read()
 except OSError:
     # 'File not found' error message.
@@ -27,3 +27,6 @@ regular_date_back = dates2dic(slited_content[2])
 we_holidays_path = slited_content[3]
 we_holidays_date_go = dates2dic(slited_content[4])
 we_holidays_date_back = dates2dic(slited_content[5])
+
+
+
