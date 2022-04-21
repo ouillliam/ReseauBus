@@ -12,8 +12,8 @@ for i, f in enumerate(data_files):
 
 
 g2 = graph.copy()
-time = "6:30"
-start = "Vernod"
+time = "7:30"
+start = "GARE"
 departures = g2.get_departures(time , start)
 print("-------DEPARTS-------------")
 print(departures)
@@ -22,5 +22,7 @@ d2 = g2.hours_from_station(time, start)
 print(len(g2.edges))
 print(len(d2))
 g2.set_weights(d2, start, True)
+distances = g2.get_distances(g2.get_value_from_label(start), False)
 print(g2)
+print(distances)
 

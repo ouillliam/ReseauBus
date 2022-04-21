@@ -1,5 +1,6 @@
 from datetime import time, timedelta
 import util
+import math
 
 class Graph:
     def __init__(self, vertices = [], labels = [], edges = []):
@@ -144,7 +145,7 @@ class Graph:
             diff = util.time_between(arrival_time, departure_time)
             minutes_between = diff.total_seconds() / 60
 
-            if not wait_departures and i > 0 and d[3] == departures[i - 1][3] : 
+            if not wait_departures and ( (i > 0 and d[3] == departures[i - 1][3]) or d[0] == self.get_value_from_label(start_station) ): 
                 minutes_between = 0
 
             weight = minutes_between + travel_time
@@ -153,6 +154,53 @@ class Graph:
             weighted_edges.append(edge)
         
         self.edges = weighted_edges
+
+    def get_distances(self, start, shortest = False):
+        # Remove unconnected nodes and init distances
+        to_visit = []
+        for e in self.edges:
+            for node in e[0:2]:
+                if node not in [ n[0] for n in to_visit]:
+                    node_dist = [node, math.inf]
+                    if node == start:
+                        node_dist[1] = 0 
+                    to_visit.append(node_dist)
+
+        def min_dist(node, dist, nodes):
+            for n in nodes:
+                if n[0] == node and dist < n[1]:
+                    n[1] = dist
+
+        def update_distances(node, visited, nodes):
+            for e in self.edges:
+                curr_dist = node[1]
+                if e[0] == node[0] and e[1] not in visited:
+                    if shortest:
+                        curr_dist += 1
+                    else:
+                        curr_dist += e[2]
+                    min_dist(e[1], curr_dist, nodes)
+                               
+        def dijkstra(visited, nodes):
+            # Find node with the shortest current distance
+            node = (None, math.inf)
+
+            for n in nodes:
+                if n[1] < node[1] and n[0] not in visited:
+                    node = n
+
+            visited.append(node[0])
+            # Update distances
+            update_distances(node, visited, nodes)
+
+            if len(visited) == len(nodes):
+                return nodes
+
+            return dijkstra(visited, nodes)
+
+        distances = dijkstra([], to_visit[:])
+        return distances
+           
 
     def __str__(self):
         string = ""
