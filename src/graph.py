@@ -134,18 +134,22 @@ class Graph:
         
         return self.get_updated_edges_from_departures(to_visit, departures, visited)
         
-    def set_weights(self, departures):
+    def set_weights(self, departures, start_station, wait_departures = True):
         weighted_edges = []
-        for d in departures:
+        for i, d in enumerate(departures):
             arrival_time = d[2][0]
-            departure_time = d[2][1]
+            departure_time = d[2][1]   
             travel_time = d[2][2]
 
             diff = util.time_between(arrival_time, departure_time)
             minutes_between = diff.total_seconds() / 60
-            weight = minutes_between + travel_time
 
-            edge = (d[0], d[1], weight, d[3])
+            if not wait_departures and i > 0 and d[3] == departures[i - 1][3] : 
+                minutes_between = 0
+
+            weight = minutes_between + travel_time
+            final_time = util.add_travel_time(departure_time, travel_time)
+            edge = (d[0], d[1], weight, d[3], departure_time, final_time)
             weighted_edges.append(edge)
         
         self.edges = weighted_edges
@@ -153,7 +157,8 @@ class Graph:
     def __str__(self):
         string = ""
         for e in self.edges:
-            string = string + f"Ligne {e[3]} {self.get_label_from_value(e[0])} -> {self.get_label_from_value(e[1])} {e[2]}\n"
+            final_time = e[4] if len(e) >= 5 else ""
+            string = string + f"Ligne {e[3]} {self.get_label_from_value(e[0])} -> {self.get_label_from_value(e[1])} {e[2]} {final_time}\n"
         return string
 
     
