@@ -1,5 +1,6 @@
 from datetime import time, timedelta
 import util
+import math
 
 class Graph:
     def __init__(self, vertices = [], labels = [], edges = []):
@@ -134,26 +135,78 @@ class Graph:
         
         return self.get_updated_edges_from_departures(to_visit, departures, visited)
         
-    def set_weights(self, departures):
+    def set_weights(self, departures, start_station, wait_departures = True):
         weighted_edges = []
-        for d in departures:
+        for i, d in enumerate(departures):
             arrival_time = d[2][0]
-            departure_time = d[2][1]
+            departure_time = d[2][1]   
             travel_time = d[2][2]
 
             diff = util.time_between(arrival_time, departure_time)
             minutes_between = diff.total_seconds() / 60
-            weight = minutes_between + travel_time
 
-            edge = (d[0], d[1], weight, d[3])
+            if not wait_departures and ( (i > 0 and d[3] == departures[i - 1][3]) or d[0] == self.get_value_from_label(start_station) ): 
+                minutes_between = 0
+
+            weight = minutes_between + travel_time
+            final_time = util.add_travel_time(departure_time, travel_time)
+            edge = (d[0], d[1], weight, d[3], departure_time, final_time)
             weighted_edges.append(edge)
         
         self.edges = weighted_edges
 
+    def get_distances(self, start, shortest = False):
+        # Remove unconnected nodes and init distances
+        to_visit = []
+        for e in self.edges:
+            for node in e[0:2]:
+                if node not in [ n[0] for n in to_visit]:
+                    node_dist = [node, math.inf]
+                    if node == start:
+                        node_dist[1] = 0 
+                    to_visit.append(node_dist)
+
+        def min_dist(node, dist, nodes):
+            for n in nodes:
+                if n[0] == node and dist < n[1]:
+                    n[1] = dist
+
+        def update_distances(node, visited, nodes):
+            for e in self.edges:
+                curr_dist = node[1]
+                if e[0] == node[0] and e[1] not in visited:
+                    if shortest:
+                        curr_dist += 1
+                    else:
+                        curr_dist += e[2]
+                    min_dist(e[1], curr_dist, nodes)
+                               
+        def dijkstra(visited, nodes):
+            # Find node with the shortest current distance
+            node = (None, math.inf)
+
+            for n in nodes:
+                if n[1] < node[1] and n[0] not in visited:
+                    node = n
+
+            visited.append(node[0])
+            # Update distances
+            update_distances(node, visited, nodes)
+
+            if len(visited) == len(nodes):
+                return nodes
+
+            return dijkstra(visited, nodes)
+
+        distances = dijkstra([], to_visit[:])
+        return distances
+           
+
     def __str__(self):
         string = ""
         for e in self.edges:
-            string = string + f"Ligne {e[3]} {self.get_label_from_value(e[0])} -> {self.get_label_from_value(e[1])} {e[2]}\n"
+            final_time = e[4] if len(e) >= 5 else ""
+            string = string + f"Ligne {e[3]} {self.get_label_from_value(e[0])} -> {self.get_label_from_value(e[1])} {e[2]} {final_time}\n"
         return string
 
     
