@@ -111,7 +111,6 @@ class Graph:
     def hours_from_station(self, departure_time, station):
         departures = self.get_departures(departure_time, station)
         start = self.get_value_from_label(station)
-
         return self.get_updated_edges_from_departures(departures[:], departures[:], [start])
 
     def get_updated_edges_from_departures(self, to_visit, departures, visited):
@@ -137,6 +136,7 @@ class Graph:
         
     def set_weights(self, departures, start_station, wait_departures = True):
         weighted_edges = []
+
         for i, d in enumerate(departures):
             arrival_time = d[2][0]
             departure_time = d[2][1]   
@@ -157,19 +157,21 @@ class Graph:
 
     def get_distances(self, start, shortest = False):
         # Remove unconnected nodes and init distances
+        start = self.get_value_from_label(start)
         to_visit = []
         for e in self.edges:
             for node in e[0:2]:
                 if node not in [ n[0] for n in to_visit]:
-                    node_dist = [node, math.inf]
+                    node_dist = [node, math.inf, None]
                     if node == start:
                         node_dist[1] = 0 
                     to_visit.append(node_dist)
 
-        def min_dist(node, dist, nodes):
+        def min_dist(node, dist, last_node, nodes):
             for n in nodes:
                 if n[0] == node and dist < n[1]:
                     n[1] = dist
+                    n[2] = last_node
 
         def update_distances(node, visited, nodes):
             for e in self.edges:
@@ -179,7 +181,7 @@ class Graph:
                         curr_dist += 1
                     else:
                         curr_dist += e[2]
-                    min_dist(e[1], curr_dist, nodes)
+                    min_dist(e[1], curr_dist, e[0], nodes)
                                
         def dijkstra(visited, nodes):
             # Find node with the shortest current distance
@@ -190,6 +192,7 @@ class Graph:
                     node = n
 
             visited.append(node[0])
+
             # Update distances
             update_distances(node, visited, nodes)
 
@@ -199,8 +202,65 @@ class Graph:
             return dijkstra(visited, nodes)
 
         distances = dijkstra([], to_visit[:])
+
         return distances
            
+    def get_path_from_distances(self, destination, distances):
+
+        def construct_path(dest, dists, path):
+            path.append(dest)
+            for d in dists:
+                if d[0] == dest:
+                    last_node = d[2]
+                    break
+
+            if last_node == None:
+                return path
+            
+            return construct_path(last_node, dists, path)
+
+        path = construct_path(destination, distances, [])
+        path.reverse()
+
+        return path
+
+    def get_path(self, start_station, end_station, departure_time, option = "foremost"):
+        bus_network = self.copy()
+        departures = bus_network.hours_from_station(departure_time, start_station)
+
+        # for d in departures:
+        #     print(d)
+
+        # Foremost : wait_departures = True, shortest = False
+        # Shortest : wait_departures = False, shortest = True
+        # Fastest  : wait_departures = False, shortest = False
+
+        wait_departures = True
+        shortest = False
+
+        if option == "shortest" or option == "fastest":
+            wait_departures = False
+
+            if option == "shortest":
+                shortest = True
+
+
+        bus_network.set_weights(departures, start_station, wait_departures)
+        distances = bus_network.get_distances(start_station, shortest)
+        #print(bus_network)
+        destination = bus_network.get_value_from_label( end_station )
+        path = bus_network.get_path_from_distances( destination , distances)
+
+        for e in bus_network.edges:
+            print(e)
+        # for i, node in enumerate(path):
+        #     if i < len(path) - 1:
+        #         for e in bus_network.edges:
+        #             if e[0] == node and e[1] == path[ i + 1]:
+        #                 print(e)
+
+        return path
+
 
     def __str__(self):
         string = ""

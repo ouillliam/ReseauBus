@@ -11,18 +11,20 @@ for i, f in enumerate(data_files):
     graph.build_graph_from_route(data["we_holidays_date_back"], i + 1)
 
 
-g2 = graph.copy()
-time = "7:30"
-start = "GARE"
-departures = g2.get_departures(time , start)
-print("-------DEPARTS-------------")
-print(departures)
-print("------------------------------")
-d2 = g2.hours_from_station(time, start)
-print(len(g2.edges))
-print(len(d2))
-g2.set_weights(d2, start, True)
-distances = g2.get_distances(g2.get_value_from_label(start), False)
-print(g2)
-print(distances)
+path = graph.get_path("CAMPUS", "Vernod", "7:29", "fastest")
+print(path)
 
+string = ""
+for node in path:
+    string += f"{graph.get_label_from_value(node)} -> "
+print(string)
+
+
+(21, 9, 3.0, 2, '7:30', '7:33')
+(9, 8, 4.0, 1, '7:35', '7:37')
+(8, 7, 4.0, 1, '7:37', '7:41')
+(7, 6, 8.0, 1, '7:41', '7:49')
+(6, 5, 1.0, 1, '7:49', '7:50')
+(5, 4, 4.0, 1, '7:50', '7:54')
+(4, 3, 5.0, 1, '7:54', '7:59')
+(3, 2, 3.0, 1, '7:59', '8:02')

@@ -27,10 +27,55 @@ class TestGraph(unittest.TestCase):
         self.graph.get_vertices_from_route(data["regular_date_go"])
         self.graph.get_edges_from_route(data["regular_date_go"], 1)
         indices_start = [0,1,2,3,4,5,6,7,8,9,10]
-        indices_end = [1,2,3,4,5,6,7,8,9,10,11]
-        edges = list(zip(indices_start, indices_end))
-        edges = [(e[0], e[1], None, 1) for e in edges]
-        self.assertEqual(self.graph.edges, edges)
+        indices_end = [2,2,3,4,5,6,7,8,9,10,11]
+        edges_test = list(zip(indices_start, indices_end))
+        edges_graph = [(e[0], e[1]) for e in self.graph.edges]
+
+        self.assertEqual(edges_graph, edges_test)
+
+    def init_graph_test_path(self):
+        self.graph.vertices = [1,2,3,4,5]
+        self.graph.labels = list(zip(self.graph.vertices, self.graph.vertices))
+
+        departure_time = "10:00"
+    
+        departures = [
+            [1, 2, (departure_time, "10:11", 10), 1],
+            [2, 3, ("10:21", "10:21", 10), 1],
+            [3, 5, ("10:31", "10:31", 10), 1],
+            [1, 5, (departure_time, "10:05", 50), 2],
+            [1, 4, (departure_time, "10:00", 20), 3],
+            [4, 5, ("10:20", "10:20", 20), 3]
+        ]
+
+        return departures
+
+    def test_path_foremost(self):
+        departures = self.init_graph_test_path()
+
+        self.graph.set_weights(departures, 1, True)
+        distances = self.graph.get_distances(1, False)
+        path = self.graph.get_path_from_distances(5, distances)
+
+        self.assertEqual(path, [1,4,5])
+
+    def test_path_fastest(self):
+        departures = self.init_graph_test_path()
+
+        self.graph.set_weights(departures, 1, False)
+        distances = self.graph.get_distances(1, False)
+        path = self.graph.get_path_from_distances(5, distances)
+
+        self.assertEqual(path, [1,2,3,5])
+
+    def test_path_shortest(self):
+        departures = self.init_graph_test_path()
+
+        self.graph.set_weights(departures, 1, False)
+        distances = self.graph.get_distances(1, True)
+        path = self.graph.get_path_from_distances(5, distances)
+
+        self.assertEqual(path, [1,5])
 
 if __name__ == '__main__':
     unittest.main()
