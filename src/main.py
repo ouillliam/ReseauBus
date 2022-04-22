@@ -10,15 +10,22 @@ for i, f in enumerate(data_files):
     graph.build_graph_from_route(data["we_holidays_date_go"], i + 1)
     graph.build_graph_from_route(data["we_holidays_date_back"], i + 1)
 
+t = "12:00"
+start = "CAMPUS"
+end = "LYCÉE_DE_POISY"
 
-path = graph.get_path("CAMPUS", "Vernod", "7:29", "fastest")
-print(path)
+path1 = graph.get_path(start, end, t, "foremost")
+path2 = graph.get_path(start, end, t, "fastest")
+path3 = graph.get_path(start, end, t, "shortest")
 
-string = ""
-for node in path:
-    string += f"{graph.get_label_from_value(node)} -> "
-print(string)
+print(path1)
+print(path2)
+print(path3)
 
+# string = ""
+# for node in path:
+#     string += f"{graph.get_label_from_value(node)} -> "
+# print(string)
 
 (21, 9, 3.0, 2, '7:30', '7:33')
 (9, 8, 4.0, 1, '7:35', '7:37')

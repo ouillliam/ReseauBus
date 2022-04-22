@@ -34,6 +34,7 @@ class Graph:
 
         def get_travel_times_between(start, end):
             travel_times = []
+            #print(f"{start} {len(route[start])} {end} {len(route[end])}")
             for i in range(len(route[start])):
                 travel_time = None
                 departure_time = route[start][i]
@@ -111,6 +112,8 @@ class Graph:
     def hours_from_station(self, departure_time, station):
         departures = self.get_departures(departure_time, station)
         start = self.get_value_from_label(station)
+        print(departures)
+        print(station)
         return self.get_updated_edges_from_departures(departures[:], departures[:], [start])
 
     def get_updated_edges_from_departures(self, to_visit, departures, visited):
@@ -125,9 +128,16 @@ class Graph:
 
         if end not in visited:
             departures_from_next_station = self.get_departures(arrival_time , arrival_station)
+            #departures = [*departures_from_next_station, *departures]
+
+            # neaty hack to keep exploring from the current route first 
+            departures_from_next_station.reverse()
+            to_visit = [*departures_from_next_station, *to_visit]
+
             departures.extend(departures_from_next_station)
-            to_visit.extend(departures_from_next_station)
+            #to_visit.extend(departures_from_next_station)
             visited.append(end)
+
 
         if not to_visit:
             return departures 
@@ -150,7 +160,7 @@ class Graph:
 
             weight = minutes_between + travel_time
             final_time = util.add_travel_time(departure_time, travel_time)
-            edge = (d[0], d[1], weight, d[3], departure_time, final_time)
+            edge = (d[0], d[1], weight, d[3], departure_time, (arrival_time, final_time))
             weighted_edges.append(edge)
         
         self.edges = weighted_edges
@@ -253,6 +263,8 @@ class Graph:
 
         for e in bus_network.edges:
             print(e)
+
+        print(distances)
         # for i, node in enumerate(path):
         #     if i < len(path) - 1:
         #         for e in bus_network.edges:
