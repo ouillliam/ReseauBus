@@ -239,6 +239,8 @@ class Graph:
            A departure is of the following form : [start_value, end_value, [time, departure_time, travel_time], route_label]
 
         """
+        if not to_visit:
+            raise Exception("Pas de départ à cet arrêt pour cet horaire")
         departure = to_visit.pop(0)
         end = departure[1]
         departure_time, travel_time = departure[2][1], departure[2][2]
@@ -420,30 +422,34 @@ class Graph:
             option (string): the path option : foremost, shortest or fastest 
 
         """
-        bus_network = self.copy()
-        departures = bus_network.hours_from_station(departure_time, start_station)
+        try:
+            bus_network = self.copy()
+            departures = bus_network.hours_from_station(departure_time, start_station)
 
-        # Foremost : wait_departures = True, shortest = False
-        # Shortest : wait_departures = False, shortest = True
-        # Fastest  : wait_departures = False, shortest = False
+            # Foremost : wait_departures = True, shortest = False
+            # Shortest : wait_departures = False, shortest = True
+            # Fastest  : wait_departures = False, shortest = False
 
-        wait_departures = True
-        shortest = False
+            wait_departures = True
+            shortest = False
 
-        if option == "shortest" or option == "fastest":
-            wait_departures = False
+            if option == "shortest" or option == "fastest":
+                wait_departures = False
 
-            if option == "shortest":
-                shortest = True
+                if option == "shortest":
+                    shortest = True
 
 
-        bus_network.set_weights(departures, start_station, wait_departures)
+            bus_network.set_weights(departures, start_station, wait_departures)
 
-        distances = bus_network.get_distances(start_station, shortest)
-        destination = bus_network.get_value_from_label( end_station )
-        path = bus_network.get_path_from_distances( destination , distances)
+            distances = bus_network.get_distances(start_station, shortest)
+            destination = bus_network.get_value_from_label( end_station )
+            path = bus_network.get_path_from_distances( destination , distances)
 
-        return path
+            return path
+        except Exception as error:
+            print(error)
+            return []
 
 
     def __str__(self):
