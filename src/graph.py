@@ -8,6 +8,9 @@ class Graph:
         self.labels = labels
         self.edges = edges #(start, end, weight, route_label)
 
+    def get_labels(self):
+        return [self.get_label_from_value(v) for v in self.vertices]
+
     
     def copy(self):
         """
@@ -96,7 +99,6 @@ class Graph:
 
         def get_travel_times_between(start, end):
             travel_times = []
-            #print(f"{start} {len(route[start])} {end} {len(route[end])}")
             for i in range(len(route[start])):
                 travel_time = None
                 departure_time = route[start][i]
@@ -104,7 +106,6 @@ class Graph:
                 if departure_time != '-' and arrival_time != "-":
                     diff = util.time_between(departure_time, arrival_time)
                     travel_time = diff.total_seconds() / 60
-                #print(f"{start}->{end} {departure_time} {travel_time}")
                 travel_times.append((departure_time, travel_time)) 
             return travel_times
 
@@ -206,8 +207,7 @@ class Graph:
         """
         departures = self.get_departures(departure_time, station)
         start = self.get_value_from_label(station)
-        print(departures)
-        print(station)
+
         return self.get_updated_edges_from_departures(departures[:], departures[:], [start])
 
     def get_updated_edges_from_departures(self, to_visit, departures, visited):
@@ -240,6 +240,7 @@ class Graph:
         arrival_time = util.add_travel_time(departure_time, travel_time)
 
         departures_from_next_station = [] 
+        to_update = []
 
         if end not in visited:
             departures_from_next_station = self.get_departures(arrival_time , arrival_station)
@@ -252,7 +253,25 @@ class Graph:
             departures.extend(departures_from_next_station)
             #to_visit.extend(departures_from_next_station)
             visited.append(end)
+        else:
+            #departures_from_next_station = self.get_departures(arrival_time , arrival_station)
+            to_remove = []
+            for d in departures:
+                if d[0] == end and util.to_datetime(arrival_time) < util.to_datetime(d[2][1]):
+                    if end not in to_update:
+                        to_remove.append(d)
+                        departures_from_next_station = self.get_departures(arrival_time , arrival_station)
+                        #departures = [*departures_from_next_station, *departures]
 
+                        # neaty hack to keep exploring from the current route first 
+                        departures_from_next_station.reverse()
+                        #to_visit = [*departures_from_next_station, *to_visit]
+
+                        departures.extend(departures_from_next_station)
+                        to_visit.extend(departures_from_next_station)
+                        visited.append(end)
+                        to_update.append(end)
+            departures = [d for d in departures if d not in to_remove]
 
         if not to_visit:
             return departures 
@@ -270,7 +289,7 @@ class Graph:
             diff = util.time_between(arrival_time, departure_time)
             minutes_between = diff.total_seconds() / 60
 
-            if not wait_departures and ( (i > 0 and d[3] == departures[i - 1][3]) or d[0] == self.get_value_from_label(start_station) ): 
+            if not wait_departures and d[0] == self.get_value_from_label(start_station): 
                 minutes_between = 0
 
             weight = minutes_between + travel_time
@@ -334,6 +353,7 @@ class Graph:
 
         def construct_path(dest, dists, path):
             path.append(dest)
+            last_node = None
             for d in dists:
                 if d[0] == dest:
                     last_node = d[2]
@@ -353,6 +373,9 @@ class Graph:
         bus_network = self.copy()
         departures = bus_network.hours_from_station(departure_time, start_station)
 
+        # for d in departures:
+        #     print(d)
+
         # Foremost : wait_departures = True, shortest = False
         # Shortest : wait_departures = False, shortest = True
         # Fastest  : wait_departures = False, shortest = False
@@ -368,6 +391,7 @@ class Graph:
 
 
         bus_network.set_weights(departures, start_station, wait_departures)
+
         distances = bus_network.get_distances(start_station, shortest)
         destination = bus_network.get_value_from_label( end_station )
         path = bus_network.get_path_from_distances( destination , distances)
