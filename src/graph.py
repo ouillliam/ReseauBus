@@ -8,10 +8,27 @@ class Graph:
         self.labels = labels
         self.edges = edges #(start, end, weight, route_label)
 
+    
     def copy(self):
+        """
+        Return a copy of  the graph
+ 
+        Returns:
+            A copy of the graph
+        """
         return Graph(self.vertices, self.labels, self.edges)
 
-    def get_vertices_from_route(self, route):
+    def build_vertices_from_route(self, route):
+        """
+        Extract the vertices corresponding to bus stops from a route and add them 
+        to the graph vertices and labels
+        
+        a route is a dict of bus stops and their hours.
+        
+        Args:
+            route (dict): The route to extract vertices from
+    
+        """
         for station in route.keys():
             for label in self.labels:
                 if station == label[1]: 
@@ -21,16 +38,61 @@ class Graph:
                 self.labels.append( ( self.vertices[-1], station ) )
 
     def get_value_from_label(self, label):
+        """
+        Get a vertex's value from its label
+        
+        Args:
+            label (string): The vertex's label
+        
+        Returns:
+            (int) The vertex's value
+        """
         for node_label_tuple in self.labels:
             if node_label_tuple[1] == label:
                 return node_label_tuple[0]
 
     def get_label_from_value(self, value):
+        """
+        Get a vertex's label from its value
+        
+        Args:
+            value (int): The vertex's value
+        
+        Returns:
+            (string) The vertex's label
+        """
         for node_label_tuple in self.labels:
             if node_label_tuple[0] == value:
                 return node_label_tuple[1]
 
-    def get_edges_from_route(self, route, route_label):
+    def build_edges_from_route(self, route, route_label):
+        """
+        Extract the edges corresponding to lines between bus stops from a route and add them 
+        to the graph edges with the given label.
+
+        The edge will be of the following form :
+        [start_value, end_value, travel_times, route_label]
+        
+        a route is a dict of bus stops and their hours.
+        
+        Args:
+            route (dict): The route
+            route_label (string): The label used to identify different routes 
+        
+
+        Subfonctions :
+            get_travel_times_between(start, end):
+                Get all the possible travel times between two stations 
+                from their hours.
+
+                 Args:
+                    start (string): The start station's label
+                    route_label (string): The en station's label
+
+                Returns:
+                    travel_times (float[]) : all possible travel times between start and end
+
+        """
 
         def get_travel_times_between(start, end):
             travel_times = []
@@ -71,14 +133,32 @@ class Graph:
 
 
     def build_graph_from_route(self, route, route_label):
-        self.get_vertices_from_route(route)
-        self.get_edges_from_route(route, route_label)
+        """
+        Call the build_vertices and build_edges methods of the graph.
         
+        Args:
+            route (dict): The route
+            route_label (string): The label used to identify different routes 
+        """
+        self.build_vertices_from_route(route)
+        self.build_edges_from_route(route, route_label)
 
-    def build_graph_from_routes(self, routes):
-        self.build_graph_from_routes(routes)
 
     def get_departures(self, time, start):
+        """
+        Return the earliest possible departures from a given station at the given time.
+        
+        Args:
+            time (string): The time you arrived at the station at
+            start (string): The station label 
+        
+
+        Returns :
+           departures (edge[]): An array of edges corresponding to the possible departures.
+
+           A departure is of the following form : [start_value, end_value, [time, departure_time, travel_time], route_label]
+
+        """
 
         t1 = util.to_datetime(time)
         departures = []
@@ -110,6 +190,20 @@ class Graph:
 
 
     def hours_from_station(self, departure_time, station):
+        """
+        Return the earliest possible departures from a given station at the given time.
+        
+        Args:
+            time (string): The time you arrived at the station at
+            start (string): The station label 
+        
+
+        Returns :
+           departures (edge[]): An array of edges corresponding to the possible departures.
+
+           A departure is of the following form : [start_value, end_value, [time, departure_time, travel_time], route_label]
+
+        """
         departures = self.get_departures(departure_time, station)
         start = self.get_value_from_label(station)
         print(departures)
@@ -117,6 +211,27 @@ class Graph:
         return self.get_updated_edges_from_departures(departures[:], departures[:], [start])
 
     def get_updated_edges_from_departures(self, to_visit, departures, visited):
+        """
+        Return the graph edges with their departure time updated after the given departures.
+
+        Before :
+        Node_1, 7:30 -> Node_2, [...] -> Node_3, [...]
+
+        After :
+        Node_1, 7:30 -> Node_2, 7:35 -> Node_3, 7:40
+        
+        Args:
+            to_visit (edge[]): edges to visit
+            departures (edge[]): the constructed array
+            visited (int[]) : the visited stations 
+        
+
+        Returns :
+           departures (edge[]): An array of edges corresponding to the possible departures.
+
+           A departure is of the following form : [start_value, end_value, [time, departure_time, travel_time], route_label]
+
+        """
         departure = to_visit.pop(0)
         end = departure[1]
         departure_time, travel_time = departure[2][1], departure[2][2]
@@ -238,9 +353,6 @@ class Graph:
         bus_network = self.copy()
         departures = bus_network.hours_from_station(departure_time, start_station)
 
-        # for d in departures:
-        #     print(d)
-
         # Foremost : wait_departures = True, shortest = False
         # Shortest : wait_departures = False, shortest = True
         # Fastest  : wait_departures = False, shortest = False
@@ -257,19 +369,8 @@ class Graph:
 
         bus_network.set_weights(departures, start_station, wait_departures)
         distances = bus_network.get_distances(start_station, shortest)
-        #print(bus_network)
         destination = bus_network.get_value_from_label( end_station )
         path = bus_network.get_path_from_distances( destination , distances)
-
-        for e in bus_network.edges:
-            print(e)
-
-        print(distances)
-        # for i, node in enumerate(path):
-        #     if i < len(path) - 1:
-        #         for e in bus_network.edges:
-        #             if e[0] == node and e[1] == path[ i + 1]:
-        #                 print(e)
 
         return path
 
