@@ -9,6 +9,12 @@ class Graph:
         self.edges = edges #(start, end, weight, route_label)
 
     def get_labels(self):
+        """
+        Return the graph labels
+ 
+        Returns:
+            The graph labels
+        """
         return [self.get_label_from_value(v) for v in self.vertices]
 
     
@@ -212,7 +218,8 @@ class Graph:
 
     def get_updated_edges_from_departures(self, to_visit, departures, visited):
         """
-        Return the graph edges with their departure time updated after the given departures.
+        Return the graph edges with their departure time updated after the given departures from 
+        the start station .
 
         Before :
         Node_1, 7:30 -> Node_2, [...] -> Node_3, [...]
@@ -244,34 +251,34 @@ class Graph:
 
         if end not in visited:
             departures_from_next_station = self.get_departures(arrival_time , arrival_station)
-            #departures = [*departures_from_next_station, *departures]
 
-            # neaty hack to keep exploring from the current route first 
             departures_from_next_station.reverse()
-            to_visit = [*departures_from_next_station, *to_visit]
 
+            to_visit = [*departures_from_next_station, *to_visit] # neaty hack to keep exploring from the current route first
             departures.extend(departures_from_next_station)
-            #to_visit.extend(departures_from_next_station)
+
             visited.append(end)
+
+        # If end station has already been visited, check if the new arrival time
+        # is not earlier than the current one, if so replace it
         else:
-            #departures_from_next_station = self.get_departures(arrival_time , arrival_station)
             to_remove = []
+
             for d in departures:
                 if d[0] == end and util.to_datetime(arrival_time) < util.to_datetime(d[2][1]):
                     if end not in to_update:
                         to_remove.append(d)
                         departures_from_next_station = self.get_departures(arrival_time , arrival_station)
-                        #departures = [*departures_from_next_station, *departures]
 
-                        # neaty hack to keep exploring from the current route first 
                         departures_from_next_station.reverse()
-                        #to_visit = [*departures_from_next_station, *to_visit]
 
                         departures.extend(departures_from_next_station)
                         to_visit.extend(departures_from_next_station)
+
                         visited.append(end)
                         to_update.append(end)
-            departures = [d for d in departures if d not in to_remove]
+            
+            departures = [d for d in departures if d not in to_remove] # Remove outdated departures
 
         if not to_visit:
             return departures 
@@ -279,9 +286,19 @@ class Graph:
         return self.get_updated_edges_from_departures(to_visit, departures, visited)
         
     def set_weights(self, departures, start_station, wait_departures = True):
+        """
+        Set the weight of every edges from the calculated departure hours and travel times
+        
+        Args:
+            departures (edge[]): The updated departures
+            start_station (string): The start station
+            wait_departures (bool) : If true, take the waiting time for the next departure from 
+            the start station into account. 
+
+        """
         weighted_edges = []
 
-        for i, d in enumerate(departures):
+        for d in departures:
             arrival_time = d[2][0]
             departure_time = d[2][1]   
             travel_time = d[2][2]
@@ -300,6 +317,17 @@ class Graph:
         self.edges = weighted_edges
 
     def get_distances(self, start, shortest = False):
+        """
+        Return the distances to every stations from the start stastion using an
+        implementation of Dijkstra's algorithm
+        
+        Args:
+            start (string): The start station
+            shortest (bool): If true, set every weight to one to get the shortest path, i.e with the least edges
+
+        Returns:
+            distances ((int,float)[]): The calculated distances 
+        """
         # Remove unconnected nodes and init distances
         start = self.get_value_from_label(start)
         to_visit = []
@@ -350,6 +378,17 @@ class Graph:
         return distances
            
     def get_path_from_distances(self, destination, distances):
+        """
+        Return the shortest path to the destination from the calculated distances
+        
+        Args:
+            destination (int): The end station
+            distances ((int, float)[]): The calculated distances
+
+        Returns:
+            path (int[]): the shortest path
+
+        """
 
         def construct_path(dest, dists, path):
             path.append(dest)
@@ -370,11 +409,19 @@ class Graph:
         return path
 
     def get_path(self, start_station, end_station, departure_time, option = "foremost"):
+        """
+        Return the shortest path between two stations given the time of departure and the
+        path option.
+        
+        Args:
+            start_station (string): The start station
+            end_station (string): The end station 
+            departure_time (string): time of departure
+            option (string): the path option : foremost, shortest or fastest 
+
+        """
         bus_network = self.copy()
         departures = bus_network.hours_from_station(departure_time, start_station)
-
-        # for d in departures:
-        #     print(d)
 
         # Foremost : wait_departures = True, shortest = False
         # Shortest : wait_departures = False, shortest = True

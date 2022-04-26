@@ -2,6 +2,17 @@ from datetime import time, timedelta
 #data_file_name = 'data/1_Poisy-ParcDesGlaisins.txt'
 #data_file_name = 'data/2_Piscine-Patinoire_Campus.txt'
 def time_between(t1, t2):
+    """
+        Return the time difference between two times
+        
+        Args:
+            t1 (string): The first time
+            t2 (string): The second time
+
+        Returns:
+            diff (timedelta): The time difference as a timedelta object
+
+    """
     t1 = to_datetime(t1)
     t2 = to_datetime(t2)
     diff = timedelta(hours = t2.hour, minutes= t2.minute) - timedelta(hours = t1.hour, minutes = t1.minute)
@@ -9,6 +20,17 @@ def time_between(t1, t2):
 
 
 def add_travel_time(t, travel_time):
+    """
+        Return the time after adding the travel time
+        
+        Args:
+            t (string): The time
+            travel_time (float): The time to add in minutes
+
+        Returns:
+            The new time
+
+    """
     t = to_datetime(t)
     arrival_td = timedelta(hours = t.hour, minutes= t.minute) + timedelta(minutes= travel_time)
     hour = int(arrival_td.total_seconds() // 3600)
@@ -17,10 +39,30 @@ def add_travel_time(t, travel_time):
     return f"{hour}:{minute}"
 
 def to_datetime(t):
+    """
+        Return the time string converted to a datetime object
+        
+        Args:
+            t1 (string): The time to convert
+
+        Returns:
+            The converted time
+
+    """
     h, m = t.split(':')
     return time(int(h), int(m))
 
 def read_route_data(data_file_name):
+    """
+        Read and return the route data from a text file
+        
+        Args:
+            data_file_name (string): The data file's name
+
+        Returns:
+            The data as dict
+
+    """
     try:
         with open(data_file_name, 'r', encoding = "UTF-8") as f:
             content = f.read()
